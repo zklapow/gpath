@@ -60,8 +60,8 @@ func (node *QuadTree) Clear() {
 }
 
 func (node *QuadTree) Split() {
-    nw := int(node.Bounds.Width/2)
-    nh := int(node.Bounds.Height/2)
+    nw := node.Bounds.Width/2
+    nh := node.Bounds.Height/2
 
     x := node.Bounds.X
     y := node.Bounds.Y
@@ -110,6 +110,7 @@ func (node *QuadTree) Insert(obj *Rect) (err error) {
         // This object belongs to a child
         if index != -1 {
             node.Nodes[index].Insert(obj)
+            return nil
         }
     }
         
@@ -119,13 +120,13 @@ func (node *QuadTree) Insert(obj *Rect) (err error) {
         tmp := make(Rects, MAXOBJECTS)
         node.Split()
 
-        for _, n := range node.Objects {
-            if n != nil {
-                index := node.index(n)
+        for i := 0; i < node.Objects.Count(); i++ {
+            if node.Objects[i] != nil {
+                index := node.index(node.Objects[i])
                 if index != -1 {
-                    node.Nodes[index].Insert(n)
+                    node.Nodes[index].Insert(node.Objects[i])
                 } else {
-                    tmp[tmp.Count()] = n
+                    tmp[tmp.Count()] = node.Objects[i]
                 }
             }
         }
@@ -141,8 +142,10 @@ func (node *QuadTree) Insert(obj *Rect) (err error) {
                 node.Nodes[index].Insert(obj)
             } else {
                 tmp[tmp.Count()] = obj
-                node.Objects = tmp
             }
+
+            node.Objects = tmp
+            return nil
         }
     } else {
         // Our object list has space
