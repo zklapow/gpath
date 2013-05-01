@@ -18,15 +18,33 @@ type QuadTree struct {
     Bounds  Rect
     Level   int
 
-    Nodes   []*QuadTree
-    Objects []*Rect
+    Nodes   Trees
+    Objects Rects
+}
+
+type Trees []*QuadTree
+func (l Trees) Count() int {
+    c := 0
+    for _, val := range l {
+        if val != nil {c++}
+    }
+    return c
+}
+
+type Rects []*Rect
+func (l Rects) Count() int {
+    c := 0
+    for _, val := range l {
+        if val != nil {c++}
+    }
+    return c
 }
 
 func New(level int, bounds Rect) (ret *QuadTree) {
     ret = &QuadTree{Bounds: bounds, Level: level}
 
-    ret.Nodes = make([]*QuadTree, 4)
-    ret.Objects = make([]*Rect, MAXOBJECTS)
+    ret.Nodes = make(Trees, 4)
+    ret.Objects = make(Rects, MAXOBJECTS)
 
     return ret
 }
@@ -86,7 +104,7 @@ func (node *QuadTree) index(obj *Rect) (index int) {
 }
 
 func (node *QuadTree) Insert(obj *Rect) (err error) {
-    if len(node.Nodes) != 0 {
+    if node.Nodes.Count() != 0 {
         index := node.index(obj)
 
         // This object belongs to a child
@@ -96,21 +114,23 @@ func (node *QuadTree) Insert(obj *Rect) (err error) {
     }
         
     // Check if its time to split this node
-    if len(node.Objects) == MAXOBJECTS {
+    if node.Objects.Count() == MAXOBJECTS {
         // Create a new list for any object which need to stay here
-        tmp := make([]*Rect, MAXOBJECTS)
+        tmp := make(Rects, MAXOBJECTS)
         node.Split()
 
         for _, n := range node.Objects {
-            index := node.index(n)
-            if index != -1 {
-                node.Nodes[index].Insert(n)
-            } else {
-                tmp[len(tmp)+1] = n
+            if n != nil {
+                index := node.index(n)
+                if index != -1 {
+                    node.Nodes[index].Insert(n)
+                } else {
+                    tmp[tmp.Count()] = n
+                }
             }
         }
 
-        if len(tmp) == MAXOBJECTS {
+        if tmp.Count() == MAXOBJECTS {
             // If the new list is the same size we have a problem
             node.Objects = tmp
             return errors.New("Quadtree appears to have been overloaded!")
@@ -120,22 +140,22 @@ func (node *QuadTree) Insert(obj *Rect) (err error) {
             if index != -1 {
                 node.Nodes[index].Insert(obj)
             } else {
-                tmp[len(tmp)+1] = obj
+                tmp[tmp.Count()] = obj
                 node.Objects = tmp
             }
         }
     } else {
         // Our object list has space
-        node.Objects[len(node.Objects)+1] = obj
+        node.Objects[node.Objects.Count()] = obj
     }
 
     return nil
 }
 
-func (node *QuadTree) childObjects() (ret []*Rect) {
+func (node *QuadTree) childObjects() (ret Rects) {
     // Get and return all child object of a node
-    ret = make([]*Rect, 0)
-    if len(node.Nodes) != 0 {
+    ret = make(Rects, 0)
+    if node.Nodes.Count() != 0 {
         for _, cn := range node.Nodes {
             ret = append(ret, cn.Objects...)
             ret = append(ret, cn.childObjects()...)
@@ -145,12 +165,12 @@ func (node *QuadTree) childObjects() (ret []*Rect) {
     return ret
 }
 
-func (node *QuadTree) Retrieve(obj *Rect) (ret []*Rect) {
+func (node *QuadTree) Retrieve(obj *Rect) (ret Rects) {
     // Build a list of all objects we could be in collsion with
-    ret = make([]*Rect, 0)
+    ret = make(Rects, 0)
 
     index := node.index(obj)
-    if index != -1 && len(node.Nodes) != 0 {
+    if index != -1 && node.Nodes.Count() != 0 {
         ret = append(ret, node.Nodes[index].Retrieve(obj)...)
     } else {
         // If the object is in this node it could collide
