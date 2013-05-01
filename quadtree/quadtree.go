@@ -1,7 +1,5 @@
 package quadtree
 
-import "errors"
-
 const (
     MAXLEVELS = 5
     MAXOBJECTS = 10
@@ -115,10 +113,14 @@ func (node *QuadTree) Insert(obj *Rect) (err error) {
     }
         
     // Check if its time to split this node
-    if node.Objects.Count() == MAXOBJECTS {
+    if node.Objects.Count() >= MAXOBJECTS {
         // Create a new list for any object which need to stay here
-        tmp := make(Rects, MAXOBJECTS)
-        node.Split()
+        tmp := make(Rects, node.Objects.Count())
+
+        // Its possible we do not need to make new nodes
+        if node.Nodes.Count() == 0 {
+            node.Split()
+        }
 
         for i := 0; i < node.Objects.Count(); i++ {
             if node.Objects[i] != nil {
@@ -131,22 +133,21 @@ func (node *QuadTree) Insert(obj *Rect) (err error) {
             }
         }
 
-        if tmp.Count() == MAXOBJECTS {
-            // If the new list is the same size we have a problem
-            node.Objects = tmp
-            return errors.New("Quadtree appears to have been overloaded!")
+        // We can now figure out where to put our new object
+        index := node.index(obj)
+        if index != -1 {
+            node.Nodes[index].Insert(obj)
         } else {
-            // We can now figure out where to put our new object
-            index := node.index(obj)
-            if index != -1 {
-                node.Nodes[index].Insert(obj)
+            if tmp.Count() >= node.Objects.Count() {
+                // We are going to need to expand the array
+                tmp = append(tmp, Rects{obj}...)
             } else {
                 tmp[tmp.Count()] = obj
             }
-
-            node.Objects = tmp
-            return nil
         }
+
+        node.Objects = tmp
+        return nil
     } else {
         // Our object list has space
         node.Objects[node.Objects.Count()] = obj
