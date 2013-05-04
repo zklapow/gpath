@@ -4,7 +4,6 @@ import(
     "testing"
     "math/rand"
     "time"
-    "fmt"
 )
 
 const (
