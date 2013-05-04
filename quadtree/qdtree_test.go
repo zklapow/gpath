@@ -9,6 +9,7 @@ import(
 const (
     TESTRECTS = 100
     TESTPOINTS = 100
+    TESTLINES = 500
 )
 
 func BenchmarkInsert(b *testing.B) {
@@ -24,7 +25,7 @@ func BenchmarkInsert(b *testing.B) {
     b.StartTimer()
     for i := 0; i < b.N; i++ {
         // Run the benchmark
-        tmp := &Rect{X: rand.Intn(700), Y: rand.Intn(700),
+        tmp := &Rect{X: rand.Intn(720), Y: rand.Intn(720),
                      Width: rand.Intn(80), Height: rand.Intn(80)}
 
         qt.Insert(tmp)
@@ -89,4 +90,33 @@ func TestInsertPoints(t *testing.T) {
     }
 
     qt.Draw("TestPoints.svg")
+}
+
+func TestInsertLine(t *testing.T) {
+    cur := time.Now()
+    rand.Seed(cur.Unix())
+
+    qt := New(0, Rect{X:0, Y:0, Width: 800, Height:800})
+    items := make(Shapes, TESTLINES)
+    for i := 0; i < TESTLINES; i++ {
+        cx := rand.Intn(760)
+        cy := rand.Intn(760)
+        ex := cx + rand.Intn(40)
+        ey := cy + rand.Intn(40)
+        tmp := &Line{Start: Point{X: cx, Y: cy}, End: Point{X: ex, Y: ey}}
+
+        err := qt.Insert(tmp)
+        if err != nil {
+            t.Fatal(err)
+        }
+
+        items[i] = tmp
+    }
+
+    if !ConfirmCount(qt, items) {
+        qt.Draw("TestLines.svg")
+        t.Fatal("Number of items inserted does not match number created!")
+    }
+
+    qt.Draw("TestLines.svg")
 }

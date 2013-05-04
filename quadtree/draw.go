@@ -14,3 +14,7 @@ func (pt *Point) Draw(out *svg.SVG, opt string) {
     // Draw points as circles with r=1
     out.Circle(pt.X, pt.Y, 1, opt)
 }
+
+func (l *Line) Draw(out *svg.SVG, opt string) {
+    out.Line(l.Start.X, l.Start.Y, l.End.X, l.End.Y, opt)
+}

@@ -48,28 +48,55 @@ type Point struct {
 }
 
 func (pt *Point) In(node *QuadTree) (ret int) {
-    // Any given point must be FULLY contained by a child
-    // This function CANNOT return -1
+    // If no child contains this point return -1
+    // This is not the same as other methods
+    // On insert this method will never return -1 because
+    // Assuming a node contains a point, one of its children
+    // MUST also contain that point
+    // -1 then indicated out of bounds of the PARENT node
+    ret = -1
+
     xmid := node.Bounds.X + (node.Bounds.Width / 2)
     ymid := node.Bounds.Y + (node.Bounds.Height / 2)
 
     // Top half
-    if pt.Y < ymid {
+    if pt.Y < ymid && pt.Y > node.Bounds.Y {
         // Left
-        if pt.X < xmid {
+        if pt.X < xmid && pt.X > node.Bounds.X {
             ret = 1
         // Right
-        } else {
+        } else if pt.X > xmid && pt.X < (node.Bounds.X + node.Bounds.Width) {
             ret = 0
         }
     // Bottom
-    } else {
+    } else if pt.Y > ymid && pt.Y < (node.Bounds.Y + node.Bounds.Height) {
         // Left
-        if pt.X < xmid {
+        if pt.X < xmid && pt.X > node.Bounds.X {
             ret = 2
         // Right
-        } else {
+        } else if pt.X > xmid && pt.X < (node.Bounds.X + node.Bounds.Width) {
             ret = 3
+        }
+    }
+
+    return ret
+}
+
+type Line struct {
+    Start Point
+    End Point
+}
+
+func (l *Line) In(node *QuadTree) (ret int) {
+    // Leverage the points in method to find the a node containing both points
+    // If no node contains both ret=-1
+    ret = -1
+
+    for i, n := range node.Nodes {
+        // If both points are in the same node the line is that node
+        if l.Start.In(n) != -1 && l.End.In(n) != -1 {
+            ret = i
+            return ret
         }
     }
 
