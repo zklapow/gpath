@@ -9,3 +9,8 @@ type Drawer interface {
 func (rect *Rect) Draw(out *svg.SVG, opt string) {
     out.Rect(rect.X, rect.Y, rect.Width, rect.Height, opt)
 }
+
+func (pt *Point) Draw(out *svg.SVG, opt string) {
+    // Draw points as circles with r=1
+    out.Circle(pt.X, pt.Y, 1, opt)
+}

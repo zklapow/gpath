@@ -8,6 +8,7 @@ import(
 
 const (
     TESTRECTS = 100
+    TESTPOINTS = 100
 )
 
 func BenchmarkInsert(b *testing.B) {
@@ -31,7 +32,16 @@ func BenchmarkInsert(b *testing.B) {
     }
 }
 
-func TestQuadTree(t *testing.T) {
+func ConfirmCount(qt *QuadTree, items Shapes) bool {
+    // Helper function for making sure insert worked properly
+    tree := make(Shapes, 0)
+    tree = append(tree, qt.Objects...)
+    tree = append(tree, qt.childObjects()...)
+
+    return tree.Count() == items.Count()
+}
+
+func TestInsertRects(t *testing.T) {
     cur := time.Now()
     rand.Seed(cur.Unix())
 
@@ -48,14 +58,35 @@ func TestQuadTree(t *testing.T) {
         items[i] = tmp
     }
 
-    tree := make(Shapes, 0)
-    tree = append(tree, qt.Objects...)
-    tree = append(tree, qt.childObjects()...)
-
-    if tree.Count() != items.Count() {
-        qt.Draw("TestQuadTreeFail.svg")
-        t.Fatalf("%v items were created but %v were inserted!", items.Count(), tree.Count())
+    if !ConfirmCount(qt, items) {
+        qt.Draw("TestRects.svg")
+        t.Fatal("Number of items inserted does not match number created!")
     }
 
-    qt.Draw("TestQuadTree.svg")
+    qt.Draw("TestRects.svg")
+}
+
+func TestInsertPoints(t *testing.T) {
+    cur := time.Now()
+    rand.Seed(cur.Unix())
+
+    qt := New(0, Rect{X:0, Y:0, Width: 800, Height:800})
+    items := make(Shapes, TESTPOINTS)
+    for i := 0; i < TESTPOINTS; i++ {
+        tmp := &Point{X: rand.Intn(800), Y: rand.Intn(800)}
+
+        err := qt.Insert(tmp)
+        if err != nil {
+            t.Fatal(err)
+        }
+
+        items[i] = tmp
+    }
+
+    if !ConfirmCount(qt, items) {
+        qt.Draw("TestPoints.svg")
+        t.Fatal("Number of items inserted does not match number created!")
+    }
+
+    qt.Draw("TestPoints.svg")
 }
