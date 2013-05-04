@@ -4,6 +4,7 @@ import (
     "os"
     "github.com/ajstarks/svgo"
     "fmt"
+    "reflect"
 )
 
 func (tree *QuadTree) Draw(fname string) (err error) {
@@ -29,23 +30,33 @@ func (tree *QuadTree) Draw(fname string) (err error) {
     return nil
 }
 
-func DrawNode(out *svg.SVG, node *QuadTree) {
+func DrawNode(out *svg.SVG, node *QuadTree) (err error) {
     // Draw the nodes bounds
     out.Rect(node.Bounds.X, node.Bounds.Y, node.Bounds.Width, node.Bounds.Height, "fill:none;stroke:red;stroke-width:4;fill-opacity:0")
 
     // Draw all objects in the node
     for _, obj := range node.Objects {
         if obj != nil {
-            out.Rect(obj.X, obj.Y, obj.Width, obj.Height, "fill:none;stroke:black;stroke-width:2;fill-opacity:0")
+            obj, ok := obj.(Drawer)
+            if ok {
+                obj.Draw(out, "fill:none;stroke:black;stroke-width:2;fill-opacity:0")
+            } else {
+                return fmt.Errorf("Node could not be drawn because it contained undrawable object of type %v", reflect.TypeOf(obj).Name())
+            }
         }
     }
 
     // Draw all child nodes if they exist
     if node.Nodes.Count() != 0 {
         for _, child := range node.Nodes {
-            DrawNode(out, child)
+            err = DrawNode(out, child)
+            if err != nil {
+                return err
+            }
         }
     }
+
+    return nil
 }
 
 func (node *QuadTree) Print() {

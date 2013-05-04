@@ -36,7 +36,7 @@ func TestQuadTree(t *testing.T) {
     rand.Seed(cur.Unix())
 
     qt := New(0, Rect{X:0, Y:0, Width: 800, Height:800})
-    items := make(Rects, TESTRECTS)
+    items := make(Shapes, TESTRECTS)
     for i := 0; i < TESTRECTS; i++ {
         tmp := &Rect{X: rand.Intn(720), Y: rand.Intn(720),
                      Width: rand.Intn(80), Height: rand.Intn(80)}
@@ -48,7 +48,7 @@ func TestQuadTree(t *testing.T) {
         items[i] = tmp
     }
 
-    tree := make(Rects, 0)
+    tree := make(Shapes, 0)
     tree = append(tree, qt.Objects...)
     tree = append(tree, qt.childObjects()...)
 
